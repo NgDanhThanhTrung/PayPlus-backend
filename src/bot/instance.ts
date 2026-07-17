@@ -1,7 +1,7 @@
 import { Telegraf, Context } from 'telegraf';
 import User from '../models/User';
 import Referral from '../models/Referral';
-import { setupBotCommands } from './commands'; // Import hàm cấu hình menu từ file commands
+// XÓA DÒNG IMPORT GÂY LỖI VÒNG LẶP: import { setupBotCommands } from './commands';
 
 const botToken = process.env.TELEGRAM_BOT_TOKEN;
 const miniAppUrl = process.env.MINI_APP_URL;
@@ -105,10 +105,6 @@ Need help? Contact support via the app.
   });
 });
 
-// ==========================================
-// TỰ ĐỘNG KHỞI TẠO BỘ LỆNH INLINE MỚI
-// ==========================================
-// Gọi hàm thiết lập để tự động xóa sạch menu cũ và cài đặt các lệnh /spin, /checkin, /myid
-setupBotCommands();
+// XÓA BỎ HOÀN TOÀN KHỐI GỌI HÀM SETUPBOTCOMMANDS() Ở ĐÂY
 
 export default bot;
