@@ -16,9 +16,16 @@ if (!miniAppUrl) {
 
 export const bot = new Telegraf(botToken);
 
-// Helper function to create inline keyboard with app button
+// Helper function to create inline keyboard with app button (Đã cập nhật sang web_app)
 const getAppKeyboard = () => ({
-  inline_keyboard: [[{ text: '🚀 Open PayPlus App', url: miniAppUrl }]],
+  inline_keyboard: [
+    [
+      { 
+        text: '🚀 Open PayPlus App', 
+        web_app: { url: miniAppUrl } 
+      }
+    ]
+  ],
 });
 
 // Start command
