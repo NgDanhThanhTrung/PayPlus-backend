@@ -5,11 +5,114 @@ import { bot } from './instance';
 const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || '7346983056';
 const MINI_APP_URL = process.env.MINI_APP_URL;
 
-// Helper function to create inline keyboard with app button
-// Khắc phục lỗi: Thêm ép kiểu 'as string' hoặc chuỗi dự phòng cho url
 const getAppKeyboard = () => ({
   inline_keyboard: [[{ text: '🚀 Open PayPlus App', url: MINI_APP_URL || 'https://pay-plus-frontend.vercel.app/' }]],
 });
+
+// ==========================================
+// THIẾT LẬP MENU LỆNH (BOT COMMANDS)
+// ==========================================
+export const setupBotCommands = async () => {
+  try {
+    // 1. Xóa sạch hoàn toàn các dòng inline commands đã đăng ký trước đó
+    await bot.telegram.setMyCommands([]);
+
+    // 2. Đăng ký tập hợp 3 lệnh inline mới cho người dùng
+    const newCommands = [
+      { command: 'spin', description: '🌀 Vòng quay may mắn trúng vàng' },
+      { command: 'checkin', description: '📅 Điểm danh nhận thưởng hằng ngày' },
+      { command: 'myid', description: '🆔 Xem Telegram ID của bản thân' }
+    ];
+
+    await bot.telegram.setMyCommands(newCommands);
+    console.log('--- [Bot] Đã làm sạch menu cũ và cập nhật bộ lệnh inline thành công ---');
+  } catch (error) {
+    console.error('Lỗi khi cập nhật danh sách lệnh Bot:', error);
+  }
+};
+
+// ==========================================
+// CÁC LỆNH MỚI CHO USER
+// ==========================================
+
+// Lệnh /myid: Xem ID cá nhân
+bot.command('myid', async (ctx: Context) => {
+  const telegramId = ctx.from?.id;
+  await ctx.reply(`🆔 ID Telegram của bạn là: \`${telegramId}\``, { parse_mode: 'MarkdownV2' });
+});
+
+// Lệnh /checkin: Điểm danh nhận thưởng
+bot.command('checkin', async (ctx: Context) => {
+  const telegramId = ctx.from?.id;
+  if (!telegramId) return;
+
+  try {
+    const user = await User.findOne({ telegramId });
+    if (!user) {
+      await ctx.reply('❌ Bạn cần khởi chạy ứng dụng (Mini App) trước để khởi tạo tài khoản!', {
+        reply_markup: getAppKeyboard()
+      });
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Ép kiểu kiểm tra thời gian điểm danh cuối cùng
+    const lastCheckIn = (user as any).lastCheckIn ? new Date((user as any).lastCheckIn) : null;
+    if (lastCheckIn && lastCheckIn >= today) {
+      await ctx.reply('📅 Hôm nay bạn đã điểm danh rồi! Hãy quay lại vào ngày mai nhé.');
+      return;
+    }
+
+    const DAILY_CHECKIN_REWARD = 200; // Số vàng thưởng
+    user.balance += DAILY_CHECKIN_REWARD;
+    (user as any).lastCheckIn = new Date(); // Cập nhật ngày điểm danh mới nhất
+    await user.save();
+
+    await ctx.reply(`🎉 Điểm danh thành công!\n💰 Bạn nhận được: +${DAILY_CHECKIN_REWARD} Vàng\n💵 Số dư hiện tại: ${user.balance} Vàng.`);
+  } catch (err) {
+    console.error('Checkin command error:', err);
+    await ctx.reply('⚠️ Có lỗi xảy ra khi xử lý điểm danh.');
+  }
+});
+
+// Lệnh /spin: Vòng quay may mắn
+bot.command('spin', async (ctx: Context) => {
+  const telegramId = ctx.from?.id;
+  if (!telegramId) return;
+
+  try {
+    const user = await User.findOne({ telegramId });
+    if (!user) {
+      await ctx.reply('❌ Bạn cần mở Mini App trước để tạo ví tài khoản.', {
+        reply_markup: getAppKeyboard()
+      });
+      return;
+    }
+
+    const rewards = [20, 50, 100, 200, 500];
+    const randomReward = rewards[Math.floor(Math.random() * rewards.length)];
+
+    user.balance += randomReward;
+    await user.save();
+
+    // Gửi hiệu ứng slot machine sinh động từ hệ thống Telegram
+    await ctx.replyWithDice({ emoji: '🎰' });
+    
+    setTimeout(async () => {
+      await ctx.reply(`🌀 Vòng quay dừng lại!\n🎁 Bạn trúng được: +${randomReward} Vàng\n💰 Số dư hiện tại: ${user.balance} Vàng.`);
+    }, 2000);
+
+  } catch (err) {
+    console.error('Spin command error:', err);
+    await ctx.reply('⚠️ Máy chủ bận, không thể quay thưởng lúc này.');
+  }
+});
+
+// ==========================================
+// CÁC LỆNH ADMIN SẴN CÓ
+// ==========================================
 
 // Broadcast command (Admin only)
 bot.command('broadcast', async (ctx: Context) => {
@@ -20,7 +123,6 @@ bot.command('broadcast', async (ctx: Context) => {
     return;
   }
 
-  // Khắc phục lỗi: Ép kiểu sang any để an tâm lấy trường text
   const message = (ctx.message as any)?.text?.replace('/broadcast', '').trim();
 
   if (!message) {
@@ -28,7 +130,6 @@ bot.command('broadcast', async (ctx: Context) => {
     return;
   }
 
-  // Fetch all users
   const users = await User.find({}, { telegramId: 1 });
 
   if (users.length === 0) {
@@ -36,9 +137,8 @@ bot.command('broadcast', async (ctx: Context) => {
     return;
   }
 
-  // Rate-limited broadcast
-  const RATE_LIMIT = 25; // messages per second
-  const BATCH_DELAY = 1000; // ms between batches
+  const RATE_LIMIT = 25;
+  const BATCH_DELAY = 1000;
   let successCount = 0;
   let failCount = 0;
 
@@ -61,7 +161,6 @@ bot.command('broadcast', async (ctx: Context) => {
 
     await Promise.all(promises);
 
-    // Wait before next batch
     if (i + RATE_LIMIT < users.length) {
       await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY));
     }
@@ -81,7 +180,6 @@ bot.command('send', async (ctx: Context) => {
     return;
   }
 
-  // Khắc phục lỗi: Ép kiểu sang any để an tâm lấy trường text và xử lý mảng
   const messageText = (ctx.message as any)?.text || '';
   const args = messageText.split(' ').slice(1);
 
