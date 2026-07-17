@@ -62,7 +62,8 @@ export const validateTelegramInitData = async (
       return;
     }
 
-    const userData = JSON.parse(decodeURIComponent(userStr));
+    // ĐÃ SỬA: Sử dụng trực tiếp userStr vì URLSearchParams đã tự động decode chuỗi giúp bạn
+    const userData = JSON.parse(userStr);
     const telegramId = userData.id;
 
     if (!telegramId) {
