@@ -22,25 +22,21 @@ export const authenticate = async (req: Request, res: Response): Promise<void> =
       });
     } else {
       // Update user info if changed
-      if (username !== user.username) user.username = username;
-      if (firstName !== user.firstName) user.firstName = firstName;
-      if (lastName !== user.lastName) user.lastName = lastName;
-      if (photoUrl !== user.photoUrl) user.photoUrl = photoUrl;
-      await user.save();
+      let isChanged = false;
+      if (username !== user.username) { user.username = username; isChanged = true; }
+      if (firstName !== user.firstName) { user.firstName = firstName; isChanged = true; }
+      if (lastName !== user.lastName) { user.lastName = lastName; isChanged = true; }
+      if (photoUrl !== user.photoUrl) { user.photoUrl = photoUrl; isChanged = true; }
+      
+      if (isChanged) {
+        await user.save();
+      }
     }
 
+    // Trả về trọn vẹn document của MongoDB dưới dạng object thuần (gồm cả _id, id,...)
     res.json({
       success: true,
-      user: {
-        telegramId: user.telegramId,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        photoUrl: user.photoUrl,
-        balance: user.balance,
-        totalEarned: user.totalEarned,
-        totalAdsWatched: user.totalAdsWatched,
-      },
+      user: user.toObject(),
     });
   } catch (error) {
     console.error('Auth controller error:', error);
