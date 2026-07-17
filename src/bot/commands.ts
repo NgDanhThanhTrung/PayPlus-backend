@@ -6,8 +6,9 @@ const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || '7346983056';
 const MINI_APP_URL = process.env.MINI_APP_URL;
 
 // Helper function to create inline keyboard with app button
+// Khắc phục lỗi: Thêm ép kiểu 'as string' hoặc chuỗi dự phòng cho url
 const getAppKeyboard = () => ({
-  inline_keyboard: [[{ text: '🚀 Open PayPlus App', url: MINI_APP_URL }]],
+  inline_keyboard: [[{ text: '🚀 Open PayPlus App', url: MINI_APP_URL || 'https://pay-plus-frontend.vercel.app/' }]],
 });
 
 // Broadcast command (Admin only)
@@ -19,7 +20,8 @@ bot.command('broadcast', async (ctx: Context) => {
     return;
   }
 
-  const message = ctx.message?.text?.replace('/broadcast', '').trim();
+  // Khắc phục lỗi: Ép kiểu sang any để an tâm lấy trường text
+  const message = (ctx.message as any)?.text?.replace('/broadcast', '').trim();
 
   if (!message) {
     await ctx.reply('Usage: /broadcast <message>');
@@ -79,7 +81,9 @@ bot.command('send', async (ctx: Context) => {
     return;
   }
 
-  const args = ctx.message?.text?.split(' ').slice(1);
+  // Khắc phục lỗi: Ép kiểu sang any để an tâm lấy trường text và xử lý mảng
+  const messageText = (ctx.message as any)?.text || '';
+  const args = messageText.split(' ').slice(1);
 
   if (args.length < 2) {
     await ctx.reply('Usage: /send <telegramId> <message>');
