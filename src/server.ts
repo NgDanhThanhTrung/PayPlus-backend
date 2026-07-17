@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/db';
 import routes from './routes';
 import bot from './bot/instance';
-import { setupBotCommands } from './bot/commands'; // Thay đổi: Import hàm setup cụ thể thay vì import suông
+import { setupBotCommands } from './bot/commands'; 
 
 dotenv.config();
 
@@ -36,8 +36,8 @@ const startServer = async () => {
     console.log('Starting Telegram bot polling...');
     await bot.launch();
     
-    // Thay đổi: Gọi hàm dọn dẹp menu cũ và ghi đè menu mới ngay sau khi bot khởi chạy thành công
-    await setupBotCommands();
+    // ĐÃ SỬA: Truyền trực tiếp đối tượng `bot` đã khởi tạo vào hàm setup để kích hoạt toàn bộ menu lệnh
+    await setupBotCommands(bot);
     
   } catch (error) {
     console.error('Failed to start server:', error);
