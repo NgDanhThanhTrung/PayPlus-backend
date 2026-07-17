@@ -23,7 +23,9 @@ const getAppKeyboard = () => ({
 // Start command
 bot.start(async (ctx: Context) => {
   const telegramId = ctx.from?.id;
-  const startParam = ctx.payload;
+  
+  // Khắc phục lỗi TS2339: Ép kiểu sang any để lấy trường payload từ deep-link /start
+  const startParam = (ctx as any).payload;
 
   if (!telegramId) {
     return;
@@ -38,7 +40,8 @@ bot.start(async (ctx: Context) => {
       username: ctx.from?.username,
       firstName: ctx.from?.first_name,
       lastName: ctx.from?.last_name,
-      photoUrl: ctx.from?.photo_url,
+      // Khắc phục lỗi TS2339: Đối tượng gốc từ Telegram API sử dụng photo_url cần qua any
+      photoUrl: (ctx.from as any)?.photo_url,
       balance: 0,
       totalEarned: 0,
       totalAdsWatched: 0,
