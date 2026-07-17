@@ -5,8 +5,16 @@ import User from '../models/User';
 const ADMIN_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || '7346983056';
 const MINI_APP_URL = process.env.MINI_APP_URL;
 
+// Helper function to create inline keyboard with web_app button
 const getAppKeyboard = () => ({
-  inline_keyboard: [[{ text: '🚀 Open PayPlus App', url: MINI_APP_URL || 'https://pay-plus-frontend.vercel.app/' }]],
+  inline_keyboard: [
+    [
+      { 
+        text: '🚀 Open PayPlus App', 
+        web_app: { url: MINI_APP_URL || 'https://pay-plus-frontend.vercel.app/' } 
+      }
+    ]
+  ],
 });
 
 // ==========================================
