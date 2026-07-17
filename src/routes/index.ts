@@ -11,6 +11,8 @@ const router = Router();
 
 // Public routes
 router.get('/config', configController.getConfig);
+// Định tuyến webhook nhận sự kiện xem quảng cáo từ Adsgram (Không chặn token)
+router.get('/ads/webhook', adsController.handleAdsgramWebhook);
 
 // Protected routes (require initData validation)
 router.post('/auth', validateTelegramInitData, authController.authenticate);
